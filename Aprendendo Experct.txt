@@ -1,0 +1,75 @@
+Aprendendo Experct
+==================
+
+1 - Introdução
+--------------
+
+O expect é uma ferramenta para automatizar um processo que recebe comando interativos, isto é, que exibe um prompt e espera que o usuário digite alguma resposta. Alguns exemplos de aplicações interativas são: passwd, ftp, fsck, ssh, telnet, gdb, entre outras.
+
+Três comandos compõe a estrutura do expect: spawn, expect e send e o uso dele é simples. O comando spawn inicia o processo, expect aguarda por uma sequência de strings de um processo e send envia uma string para um processo (comandos, senhas e outros).
+
+
+Instalação
+----------
+
+Expect é uma extensão Tcl e pode ser instalado em praticamente todas distribuições Linux, seja através de um gerenciador de pacotes como por exemplo apt-get no Debian, yum no Red Hat ou ainda através do código fonte. No meu caso, estou utilizando o Linux Debian e para instalar execute:
+
+# sudo apt-get install expect
+
+Vamos a um exemplo, onde imagine você como administrador de uma grande rede de uma universidade com mais de 1000 estudantes por turno, e a cada semestre você necessite "resetar" todas as senhas desses estudantes. Bom seria um trabalhão já que não conseguiriamos fazer isso com um ShellScript, pois é necessário a interação com o utilitário passwd. Então poderiamos fazer algo assim:
+
+# passwd Well
+Changing password for libes on thunder.
+New password:
+Retype new password:
+
+Então podemos fazer algo como:
+
+spawn passwd [lindex $argv 0]			# Inicia o utilitário passwd utilizando o argumento 0
+   set password [linex $argv 1]			# Cria uma variável chamada password e atribui o valor do argumento 1
+   expect "password:"					# Espera pelo prompt com as seguintes strings "password:"
+   send "$password\r"					# Envia a senha armazenada na variável password
+   expect "password:"
+   send "$password\r"
+   expect eof							# Informa o fim do script EoF - End of File
+   
+Outro exemplo seria o debugging de uma aplicação no GDB (GNU Debugger), onde necessitamos ver o endereço da de uma variável com o comando:
+
+(gdb) print &var
+$1 = (int *) 0xe008
+
+Poderiamos fazer o seguinte:
+send "print &var\r"
+expect "0x*\r" {								# Aqui fazemos uma RegEx para encontrar o padrão (pattern) 0x e qualquer coisa após (*)
+   send_user "$expect_out(0,string)\n"			# Aqui utilizamos a variável interna expect_out para enviar o que deu match na RegEx para
+}												# enviar para o usuário esse resultado.
+
+Podemos ter uma interação parcial utilizando o comando Expect interact, interrompendo a automatização e deixando o usuário que executou o script para ele interagir com o dispositivo.
+
+Um exemplo seria o utilitário fsck que faz uma checagem do file system em busca de inconcistências e questiona se você deseja corrigir ou não, poderiamos responder para alguns tipos e erro yes, para outros no e ainda para aqueles que não foi identificado pelo script solicitar uma interação do usuário:
+
+while 1 {
+   expect {
+      eof						{break}
+	  "UNREF FILE*CLEAR\\?"		{send "y\r"}
+	  "BAD INODE*FIX\\?"		{send "n\r"}
+	  "\\? "					{interact +}
+   }
+}
+
+Assim o script irá automatizar a tarefa e apenas irá solicitar interação do usuário em casos especificos, que se eles não ocorrerem o script cumprirá a automatização.
+
+A ideia não utiliza-lo com muita frequência, pois quebraria a ideia de automatizar as tarefas.
+
+
+2 - TCL (Terminal Command Line)
+===============================
+
+
+
+
+
+
+
+
+página -> (23) - 59 de 610
